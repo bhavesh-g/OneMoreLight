@@ -84,6 +84,17 @@
         .modal-content {
             color: black;
         }
+
+        /* Styles for the lighting effect */
+        .lighting-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -91,8 +102,11 @@
         <script src="https://unpkg.com/react/umd/react.production.min.js"></script>
         <script src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
         <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+        <!-- jQuery must be included before Bootstrap's JavaScript -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
         <script type="text/babel">
             const { useState, useEffect, useRef } = React;
 
@@ -214,16 +228,63 @@
                                 <option value="lightening">Lightening</option>
                             </select>
                         </div>
-                        <button className="btn btn-primary" onClick={handleStart}>Start</button>
+                        <button className="btn btn-primary mt-4" onClick={handleStart}>Start</button>
                     </div>
                 );
             };
 
             const Lighting = ({ settings, onComplete }) => {
-                const { colorMode, speed } = settings;
+                const { time, colorMode, speed } = settings;
+                const [timeRemaining, setTimeRemaining] = useState(time);
+                const [isLightingActive, setIsLightingActive] = useState(true);
+                const intervalRef = useRef(null);
+
+                useLightingEffect(colorMode, speed, isLightingActive);
 
                 useEffect(() => {
-                    if (!settings) return;
+                    const updateTime = () => {
+                        setTimeRemaining((prev) => {
+                            if (prev <= 0) {
+                                setIsLightingActive(false);
+                                clearInterval(intervalRef.current);
+                                onComplete();
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    };
+
+                    intervalRef.current = setInterval(updateTime, 1000);
+
+                    return () => clearInterval(intervalRef.current);
+                }, [time]);
+
+                useEffect(() => {
+                    const handleClick = () => {
+                        if (isLightingActive) {
+                            setIsLightingActive(false);
+                            clearInterval(intervalRef.current);
+                            onComplete();
+                        }
+                    };
+
+                    window.addEventListener('click', handleClick);
+
+                    return () => {
+                        window.removeEventListener('click', handleClick);
+                    };
+                }, [onComplete, isLightingActive]);
+
+                if (isLightingActive) {
+                    return <div className="lighting-effect"></div>;
+                }
+
+                return null;
+            };
+
+            const useLightingEffect = (colorMode, speed, isLightingActive) => {
+                useEffect(() => {
+                    if (!isLightingActive) return;
 
                     const colors = getColors(colorMode);
                     let index = 0;
@@ -236,14 +297,7 @@
                     const intervalId = setInterval(changeColor, getSpeedInterval(speed));
 
                     return () => clearInterval(intervalId);
-                }, [colorMode, speed]);
-
-                return (
-                    <div className="app">
-                        <h1>Lighting Effect in Progress...</h1>
-                        <button className="btn btn-secondary" onClick={onComplete}>Stop</button>
-                    </div>
-                );
+                }, [colorMode, speed, isLightingActive]);
             };
 
             const getColors = (colorMode) => {
@@ -274,41 +328,9 @@
                 }
             };
 
-            // Register service worker
-            useEffect(() => {
-                if ('serviceWorker' in navigator) {
-                    window.addEventListener('load', () => {
-                        navigator.serviceWorker.register('/service-worker.js')
-                            .then((registration) => {
-                                console.log('Service Worker registered with scope:', registration.scope);
-                            })
-                            .catch((error) => {
-                                console.error('Service Worker registration failed:', error);
-                            });
-                    });
-                }
-            }, []);
-
             ReactDOM.render(<App />, document.getElementById('root'));
         </script>
     </div>
-    <!-- Install Prompt Script -->
-    <script>
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (event) => {
-            deferredPrompt = event;
-            document.querySelector('button#install').addEventListener('click', () => {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    } else {
-                        console.log('User dismissed the install prompt');
-                    }
-                    deferredPrompt = null;
-                });
-            });
-        });
-    </script>
+    <script src="/service-worker.js"></script>
 </body>
 </html>
