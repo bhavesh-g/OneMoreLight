@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>One More Light</title>
+    <title>One More Light2</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="manifest" href="/manifest.json">
     <style>
@@ -242,9 +242,11 @@
                 useLightingEffect(colorMode, speed, isLightingActive);
 
                 useEffect(() => {
+                    console.log('Setting up interval');
                     const updateTime = () => {
                         setTimeRemaining((prev) => {
                             if (prev <= 0) {
+                                console.log('Effect completed');
                                 setIsLightingActive(false);
                                 clearInterval(intervalRef.current);
                                 onComplete();
@@ -256,12 +258,16 @@
 
                     intervalRef.current = setInterval(updateTime, 1000);
 
-                    return () => clearInterval(intervalRef.current);
+                    return () => {
+                        clearInterval(intervalRef.current);
+                        console.log('Interval cleared');
+                    };
                 }, [time]);
 
                 useEffect(() => {
                     const handleClick = () => {
                         if (isLightingActive) {
+                            console.log('Click detected - stopping effect');
                             setIsLightingActive(false);
                             clearInterval(intervalRef.current);
                             onComplete();
@@ -273,7 +279,7 @@
                     return () => {
                         window.removeEventListener('click', handleClick);
                     };
-                }, [onComplete, isLightingActive]);
+                }, [isLightingActive]);
 
                 if (isLightingActive) {
                     return <div className="lighting-effect"></div>;
