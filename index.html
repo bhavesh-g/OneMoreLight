@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One More Light</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .menu {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .menu h1 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .menu input, .menu select, .menu button {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            background-color: #222;
+            color: #fff;
+            border-radius: 5px;
+        }
+
+        .menu button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+
+        .menu button:hover {
+            background-color: #006FE8;
+        }
+
+        footer {
+            margin-top: auto; 
+            width: 100%;
+            font-size: 0.8em;
+            color: #ccc;
+            padding: 10px;
+            background-color: #000;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .hide-footer footer {
+            opacity: 0;
+        }
+
+        /* Custom styles for the modal */
+        .modal-content {
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div id="root" class="app">
+        <script src="https://unpkg.com/react/umd/react.production.min.js"></script>
+        <script src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"></script>
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script type="text/babel">
+            const { useState, useEffect, useRef } = React;
+
+            const App = () => {
+                const [settings, setSettings] = useState(null);
+                const [footerVisible, setFooterVisible] = useState(true);
+                const [showWarning, setShowWarning] = useState(false);
+                const [initialStart, setInitialStart] = useState(true);
+                const [pendingSettings, setPendingSettings] = useState(null);
+
+                const handleStart = (newSettings) => {
+                    if (initialStart) {
+                        setPendingSettings(newSettings);
+                        setShowWarning(true);
+                    } else {
+                        setSettings(newSettings);
+                        setFooterVisible(false); // Hide the footer
+                    }
+                };
+
+                const handleWarningAcknowledge = () => {
+                    setSettings(pendingSettings);
+                    setFooterVisible(false);
+                    setShowWarning(false);
+                    setInitialStart(false);
+                };
+
+                const handleWarningCancel = () => {
+                    setShowWarning(false);
+                    setPendingSettings(null);
+                };
+
+                return (
+                    <div className={`app ${!footerVisible ? 'hide-footer' : ''}`}>
+                        {settings ? (
+                            <Lighting settings={settings} onComplete={() => {
+                                setSettings(null);
+                                setFooterVisible(true); // Show the footer
+                                document.body.style.backgroundColor = '#000'; // Reset background color
+                            }} />
+                        ) : (
+                            <MainMenu onStart={handleStart} />
+                        )}
+                        <footer>
+                            Made by <a href="https://www.linkedin.com/in/mebhaveshg/" target="_blank" rel="noopener noreferrer">Bhavesh Gupta</a>
+                        </footer>
+                        {showWarning && (
+                            <div className="modal show d-block" tabindex="-1" role="dialog">
+                                <div className="modal-dialog" role="document">
+                                    <div className="modal-content">
+                                        <div className="modal-header">
+                                            <h5 className="modal-title">Warning</h5>
+                                            <button type="button" className="close" onClick={handleWarningCancel}>
+                                                <span>&times;</span>
+                                            </button>
+                                        </div>
+                                        <div className="modal-body">
+                                            <small>This effect might not be suitable for kids and people with Photosensitive epilepsy.</small> <p>Do you wish to proceed?</p>
+                                        </div>
+                                        <div className="modal-footer">
+                                            <button type="button" className="btn btn-primary" onClick={handleWarningAcknowledge}>Yes</button>
+                                            <button type="button" className="btn btn-secondary" onClick={handleWarningCancel}>No</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            const MainMenu = ({ onStart }) => {
+                const [time, setTime] = useState(10);
+                const [colorMode, setColorMode] = useState('bw');
+                const [speed, setSpeed] = useState('fast');
+
+                const handleStart = () => {
+                    onStart({ time, colorMode, speed });
+                };
+
+                return (
+                    <div className="menu">
+                        <h1 className="mt-5">One More Light</h1>
+                        <div className="form-group mt-5">
+                            <label htmlFor="timeInput">Time (seconds):</label>
+                            <input
+                                id="timeInput"
+                                type="number"
+                                className="form-control"
+                                value={time}
+                                onChange={(e) => setTime(e.target.value)}
+                                min="10"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="colorModeSelect">Color Mode:</label>
+                            <select
+                                id="colorModeSelect"
+                                className="form-control"
+                                value={colorMode}
+                                onChange={(e) => setColorMode(e.target.value)}
+                            >
+                                <option value="multi">Multi Color</option>
+                                <option value="bw">Black & White</option>
+                                <option value="sos">SOS Flash</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="speedSelect">Speed:</label>
+                            <select
+                                id="speedSelect"
+                                className="form-control"
+                                value={speed}
+                                onChange={(e) => setSpeed(e.target.value)}
+                            >
+                                <option value="slow">Slow</option>
+                                <option value="medium">Medium</option>
+                                <option value="fast">Fast</option>
+                                <option value="lightening">Lightening</option>
+                            </select>
+                        </div>
+                        <button className="btn btn-primary" onClick={handleStart}>Start</button>
+                    </div>
+                );
+            };
+
+            const Lighting = ({ settings, onComplete }) => {
+                const { colorMode, speed } = settings;
+
+                useEffect(() => {
+                    if (!settings) return;
+
+                    const colors = getColors(colorMode);
+                    let index = 0;
+
+                    const changeColor = () => {
+                        document.body.style.backgroundColor = colors[index];
+                        index = (index + 1) % colors.length;
+                    };
+
+                    const intervalId = setInterval(changeColor, getSpeedInterval(speed));
+
+                    return () => clearInterval(intervalId);
+                }, [colorMode, speed]);
+
+                return (
+                    <div className="app">
+                        <h1>Lighting Effect in Progress...</h1>
+                        <button className="btn btn-secondary" onClick={onComplete}>Stop</button>
+                    </div>
+                );
+            };
+
+            const getColors = (colorMode) => {
+                switch (colorMode) {
+                    case 'multi':
+                        return ['#FF5733', '#33FF57', '#3357FF', '#FF33A1', '#A133FF', '#33FFF6'];
+                    case 'sos':
+                        return ['#FFA500', '#FFFF00'];
+                    case 'bw':
+                        return ['#FFFFFF', '#000000'];
+                    default:
+                        return ['#FFFFFF', '#000000'];
+                }
+            };
+
+            const getSpeedInterval = (speed) => {
+                switch (speed) {
+                    case 'slow':
+                        return 1000;
+                    case 'medium':
+                        return 600;
+                    case 'fast':
+                        return 400;
+                    case 'lightening':
+                        return 250;
+                    default:
+                        return 400;
+                }
+            };
+
+            // Register service worker
+            useEffect(() => {
+                if ('serviceWorker' in navigator) {
+                    window.addEventListener('load', () => {
+                        navigator.serviceWorker.register('/service-worker.js')
+                            .then((registration) => {
+                                console.log('Service Worker registered with scope:', registration.scope);
+                            })
+                            .catch((error) => {
+                                console.error('Service Worker registration failed:', error);
+                            });
+                    });
+                }
+            }, []);
+
+            ReactDOM.render(<App />, document.getElementById('root'));
+        </script>
+    </div>
+    <!-- Install Prompt Script -->
+    <script>
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (event) => {
+            deferredPrompt = event;
+            document.querySelector('button#install').addEventListener('click', () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
