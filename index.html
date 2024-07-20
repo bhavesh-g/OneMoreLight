@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>One More Light2</title>
+    <title>One More Light</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="manifest" href="/manifest.json">
     <style>
@@ -94,6 +94,7 @@
             height: 100%;
             background-color: #000;
             z-index: 1000;
+            pointer-events: none; /* Prevent interaction */
         }
     </style>
 </head>
@@ -242,11 +243,10 @@
                 useLightingEffect(colorMode, speed, isLightingActive);
 
                 useEffect(() => {
-                    console.log('Setting up interval');
+                    console.log('Setting up interval for time:', time);
                     const updateTime = () => {
                         setTimeRemaining((prev) => {
                             if (prev <= 0) {
-                                console.log('Effect completed');
                                 setIsLightingActive(false);
                                 clearInterval(intervalRef.current);
                                 onComplete();
@@ -258,34 +258,26 @@
 
                     intervalRef.current = setInterval(updateTime, 1000);
 
-                    return () => {
-                        clearInterval(intervalRef.current);
-                        console.log('Interval cleared');
-                    };
-                }, [time]);
+                    return () => clearInterval(intervalRef.current);
+                }, [time, onComplete]);
 
                 useEffect(() => {
                     const handleClick = () => {
-                        if (isLightingActive) {
-                            console.log('Click detected - stopping effect');
-                            setIsLightingActive(false);
-                            clearInterval(intervalRef.current);
-                            onComplete();
-                        }
+                        setIsLightingActive(false);
+                        clearInterval(intervalRef.current);
+                        onComplete();
                     };
 
-                    window.addEventListener('click', handleClick);
+                    if (isLightingActive) {
+                        window.addEventListener('click', handleClick);
+                    }
 
                     return () => {
                         window.removeEventListener('click', handleClick);
                     };
                 }, [isLightingActive]);
 
-                if (isLightingActive) {
-                    return <div className="lighting-effect"></div>;
-                }
-
-                return null;
+                return isLightingActive ? <div className="lighting-effect"></div> : null;
             };
 
             const useLightingEffect = (colorMode, speed, isLightingActive) => {
